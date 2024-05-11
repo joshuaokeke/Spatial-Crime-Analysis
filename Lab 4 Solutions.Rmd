@@ -1,0 +1,250 @@
+---
+title: "*Spatial Statistics Lab 4*"
+author: '**Onyedikachi J Okeke**'
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### **0.0 To Load the library**
+Package rgda and ‘maptools’ was removed from the CRAN repository.
+Formerly available versions can be obtained from the archive.
+Archived on 2023-10-16 at the request of the maintainer.
+So Consider using 'sf' or 'terra' instead
+
+```{r,comment="",echo=TRUE,eval=FALSE}
+library(sp)
+library(spatstat)
+library(sf)
+library(spatstat.geom)
+library(ctv)
+library(terra)
+library(spdep)
+library(terra)
+library(RColorBrewer)
+library(classInt)
+library(epitools)
+library(DCluster)
+library(rgdal)
+library(maptools)
+
+```
+Library 
+```{r,echo=F,results='Show', fig.show='hold',eval=T}
+library(sp)
+library(spatstat)
+library(sf)
+library(spatstat.geom)
+library(ctv)
+library(terra)
+library(spdep)
+library(terra)
+library(RColorBrewer)
+library(classInt)
+library(epitools)
+library(DCluster)
+library(rgdal)
+library(maptools)
+
+```
+
+### **Loading city_limits_km and StLouisCrime2014**
+
+```{r,comment="",echo=TRUE,eval=FALSE}
+library(rgdal)
+library(spatstat)
+library(sp)
+library(sf)
+library(spatstat.geom)
+library(maptools)
+
+# Read the shapefile
+S <- readOGR("C:/Spatial Statistics Labwork/Lab4Data/city_limits_km.shp")
+
+# Convert the Spatial object to SpatialPolygons
+SP <- as(S, "SpatialPolygons")
+
+SP <- as(S, "SpatialPolygons")
+
+W <- as(SP, "owin")
+
+plot(W)
+
+xy <- read.table("C:/Spatial Statistics Labwork/Lab4Data/StLouisCrime2014.txt", header=T, sep="\t")
+attach(xy)
+pp <- ppp(X, Y, window=W, marks=CRIME)
+
+plot(pp)
+
+gun <- pp[CRIME=="DISORDERLY"]
+rob <- pp[CRIME=="BURGLARY"]
+hit <- pp[CRIME=="HITANDRUN"]
+
+plot(density(gun))
+contour(density(gun), add=T)
+plot(gun, add=T)
+
+#Kernel density visualization is performed in spatstat using the density() function
+
+plot(density(gun, 0.25))
+
+d250 <- density(gun, 0.25)
+plot(d250)
+contour(d250, add=T)
+plot(gun, add=T)
+
+plot(gun, add=T)
+r <- bw.diggle(gun)
+
+r
+
+```
+##### Result
+```{r,echo=F,results='Show', fig.show='hold',eval=T}
+library(rgdal)
+library(spatstat)
+library(sp)
+library(sf)
+library(spatstat.geom)
+library(maptools)
+
+# Read the shapefile
+S <- readOGR("C:/Spatial Statistics Labwork/Lab4Data/city_limits_km.shp")
+
+# Convert the Spatial object to SpatialPolygons
+SP <- as(S, "SpatialPolygons")
+
+SP <- as(S, "SpatialPolygons")
+
+W <- as(SP, "owin")
+
+plot(W)
+
+xy <- read.table("C:/Spatial Statistics Labwork/Lab4Data/StLouisCrime2014.txt", header=T, sep="\t")
+attach(xy)
+pp <- ppp(X, Y, window=W, marks=CRIME)
+
+plot(pp)
+
+gun <- pp[CRIME=="DISORDERLY"]
+rob <- pp[CRIME=="BURGLARY"]
+hit <- pp[CRIME=="HITANDRUN"]
+
+plot(density(gun))
+contour(density(gun), add=T)
+plot(gun, add=T)
+
+#Kernel density visualization is performed in spatstat using the density() function
+
+plot(density(gun, 0.25))
+
+d250 <- density(gun, 0.25)
+plot(d250)
+contour(d250, add=T)
+plot(gun, add=T)
+
+plot(gun, add=T)
+r <- bw.diggle(gun)
+
+r
+```
+
+Q4. Create density maps (in R) of the gun homicide data, experimenting with different kernel density bandwidths. Provide a commentary discussing the most suitable bandwidth choice for this analysis visualization method. (15 points)
+
+
+## **convert it to a spatstat point pattern object, with the different crime types as an identifying mark**
+
+```{r,comment="",echo=TRUE,eval=FALSE}
+nnd <- nndist.ppp(gun)
+hist(nnd)
+summary(nnd)
+mnnd <- mean(nnd)
+exp_nnd <- 0.5 / sqrt(gun$n / area.owin(W))
+
+print (mnnd / exp_nnd)
+
+```
+#### Result
+```{r,echo=F,results='Show', fig.show='hold',eval=T}
+nnd <- nndist.ppp(gun)
+hist(nnd)
+summary(nnd)
+mnnd <- mean(nnd)
+exp_nnd <- 0.5 / sqrt(gun$n / area.owin(W))
+
+print (mnnd / exp_nnd)
+```
+
+Q5. Is this pattern clustered? Or evenly-spaced?
+
+
+## **The Quadrat analysis**
+
+```{r,comment="",echo=TRUE,eval=FALSE}
+par(mfrow=c(1,1))
+q <- quadratcount(hit, 4, 8)
+plot(q)
+plot(hit, add=T)
+quadrat.test(hit, 4, 8)
+quadrat.test(hit, 4, 8, alternative="clustered")
+quadrat.test(hit, 4, 8, alternative="regular")
+
+```
+#### Result
+```{r,echo=F,results='Show', fig.show='hold',eval=T}
+par(mfrow=c(1,1))
+q <- quadratcount(hit, 4, 8)
+plot(q)
+plot(hit, add=T)
+quadrat.test(hit, 4, 8)
+quadrat.test(hit, 4, 8, alternative="clustered")
+quadrat.test(hit, 4, 8, alternative="regular")
+
+```
+
+Q6. Take a screenshot of the plotted figure. Is it a clustered, regular, or random pattern?
+
+## **The distance-based functions: G, F, K (and its relative L) and the more recent pair correlation function.**
+
+```{r,comment="",echo=TRUE,eval=FALSE}
+
+library(spatstat) 
+
+g_gun <- Gest(gun)
+f_gun <- Fest(gun)
+k_gun <- Kest(gun)
+l_gun <- Lest(gun)
+pcf_gun <- pcf(gun)
+
+par(mfrow = c(1, 1))
+
+plot(g_gun)
+plot(f_gun)
+plot(k_gun)
+plot(l_gun)
+plot(pcf_gun)
+
+```
+#### Result
+```{r,echo=F,results='Show', fig.show='hold',eval=T}
+
+g_gun <- Gest(gun)
+f_gun <- Fest(gun)
+k_gun <- Kest(gun)
+l_gun <- Lest(gun)
+pcf_gun <- pcf(gun)
+
+par(mfrow = c(1, 1))
+plot(g_gun)
+plot(f_gun)
+plot(k_gun)
+plot(l_gun)
+plot(pcf_gun)
+
+```
