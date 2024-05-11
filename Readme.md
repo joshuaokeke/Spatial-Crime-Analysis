@@ -1,7 +1,3 @@
-# Spatial Statistics Lab 4
-
-Welcome to Spatial Statistics Lab 4! This lab explores various spatial analysis techniques using R and the `spatstat` package. 
-
 ## Table of Contents
 
 - [Introduction](#introduction)
